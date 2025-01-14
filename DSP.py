@@ -32,24 +32,6 @@ def calcular_pitch_roll(acelX, acelY, acelZ):
     return pitch, roll
 
 
-def promedio_movil(datos, n):
-    """
-    Calcula el promedio móvil de una lista de datos si la longitud es mayor que 'n'.
-
-    Parámetros:
-    - datos: Lista de números.
-    - n: Tamaño del intervalo para calcular el promedio móvil.
-
-    Retorna:
-    - Una lista con los valores del promedio móvil o la lista original si es menor o igual a 'n'.
-    """
-    if len(datos) <= n:
-        return datos  # Si la longitud es menor o igual a 'n', devolver la lista original.
-
-    promedios = [sum(datos[i:i + n]) / n for i in range(len(datos) - n + 1)]
-    return promedios
-
-
 def calcular_psd(Acc, f):
     """
     Calcula la autocorrelación de la señal y luego la Densidad Espectral de Potencia (PSD).

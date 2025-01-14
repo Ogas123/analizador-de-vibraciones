@@ -208,8 +208,7 @@ class MainWindow(QMainWindow):
         self.vel_plot.addLegend()
         self.vel_plot.setLabel('bottom', 'Tiempo', units='s')
         self.vel_plot.setLabel('left', 'Velocidad', units='mm/s')
-        self.vel = self.vel_plot.plot(pen='r', name='Velocidad')
-        self.velrms = self.vel_plot.plot(pen='g', name='RMS')
+        self.vrms = self.vel_plot.plot(pen='m', name='RMS')
 
 
     def iniciar_medicion(self):
@@ -235,9 +234,10 @@ class MainWindow(QMainWindow):
         self.accel_z.setData([], [])
         self.pitch.setData([], [])
         self.roll.setData([], [])
-        self.PSD.setData([], [])
-        self.vel.setData([], [])
-        self.velrms.setData([], [])
+        self.PSDx.setData([], [])
+        self.PSDy.setData([], [])
+        self.PSDz.setData([], [])
+        self.vrms.setData([], [])
 
     def iniciar_grabacion(self):
         filename = QFileDialog.getSaveFileName(self, "Guardar Medición", "", "Archivos de texto (*.csv)")[0]

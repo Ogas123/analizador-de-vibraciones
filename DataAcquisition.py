@@ -2,14 +2,12 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from collections import deque
 import numpy as np
 from COM import recibir, procesar_aceleracion, guardar_csv
-from DSP import calibrar_aceleracion, calcular_pitch_roll, calcular_psd, promedio_movil
-
+from DSP import calibrar_aceleracion, calcular_pitch_roll, calcular_psd
 # Buffers circulares 
 acelX_list, acelY_list, acelZ_list = deque(maxlen=100), deque(maxlen=100), deque(maxlen=100)
 acelX_centrada_list, acelY_centrada_list, acelZ_centrada_list = deque(maxlen=100), deque(maxlen=100), deque(maxlen=100)
 pitch_list, roll_list = deque(maxlen=100), deque(maxlen=100)
-v_rms_list = deque(maxlen=100)
-velocidad_mm_s = 0
+vrms_list = deque(maxlen=100)
 
 tiempo_list = deque(maxlen=100)
 tiempo = 0
@@ -53,46 +51,38 @@ class WorkerThread(QThread):
                     # Actualizar tiempo
                     tiempo += ts
                     tiempo_list.append(tiempo)
-
+                    
                     # Calcular pitch y roll
                     pitch, roll = calcular_pitch_roll(acelX_cal, acelY_cal, acelZ_cal)
                     pitch_list.append(pitch)
                     roll_list.append(roll)
-                    pitch_filtrado_list = promedio_movil(pitch_list, 100)
-                    roll_filtrado_list = promedio_movil(roll_list, 100)
-
-                    # Calcular PSD
-                    tx, psdx = calcular_psd(acelX_centrada_list, fs)
-                    ty, psdy = calcular_psd(acelY_centrada_list, fs)
-                    tz, psdz = calcular_psd(acelZ_centrada_list, fs)
-
-                    # Filtrar datos antes de integrarlos
-                    acelX_filtrada_list = promedio_movil(acelX_centrada_list, 100)
-                    acelY_filtrada_list = promedio_movil(acelY_centrada_list, 100)
-                    acelZ_filtrada_list = promedio_movil(acelZ_centrada_list, 100)
 
                     # Integración para obtener velocidad (m/s)
-                    velocidadX = np.cumsum(ts * np.array(acelX_filtrada_list))
-                    velocidadY = np.cumsum(ts * np.array(acelY_filtrada_list))
-                    velocidadZ = np.cumsum(ts * np.array(acelZ_filtrada_list))
+                    velocidadX = np.cumsum(ts * np.array(acelX_centrada_list))
+                    velocidadY = np.cumsum(ts * np.array(acelY_centrada_list))
+                    velocidadZ = np.cumsum(ts * np.array(acelZ_centrada_list))
 
                     # Calcular velocidad resultante
                     velocidad_resultante = np.sqrt(velocidadX**2 + velocidadY**2 + velocidadZ**2)
                     velocidad_mm_s = velocidad_resultante * 1000   # Velocidad en mm/s
                     
                     # Calcular RMS de la velocidad
-                    v_rms = np.sqrt(np.mean(velocidad_mm_s**2)) 
-                    v_rms_list.append(v_rms)
+                    vrms = np.sqrt(np.mean(velocidad_mm_s**2)) 
+                    vrms_list.append(vrms)
 
+                    # Calcular PSD
+                    tx, psdx = calcular_psd(acelX_centrada_list, fs)
+                    ty, psdy = calcular_psd(acelY_centrada_list, fs)
+                    tz, psdz = calcular_psd(acelZ_centrada_list, fs)
+                    
                     # Emitir los datos procesados
                     self.data.emit({
                         "acelX_list": acelX_centrada_list,
                         "acelY_list": acelY_centrada_list,
                         "acelZ_list": acelZ_centrada_list,
                         "tiempo_list": tiempo_list,
-                        "pitch_list": pitch_filtrado_list,
-                        "roll_list": roll_filtrado_list,
+                        "pitch_list": pitch_list,
+                        "roll_list": roll_list,
                         "psd": (tx, psdx, ty, psdy, tz, psdz),
-                        "velocidad_list": velocidad_mm_s,
-                        "v_rms_list": v_rms_list,
+                        "vrms_list": vrms_list,
                     })

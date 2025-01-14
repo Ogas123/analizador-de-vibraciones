@@ -21,12 +21,11 @@ def actualizar_gui(datos):
     window.PSDz.setData(tz, psdz)
 
     # Graficar velocidad
-    window.vel.setData(datos["tiempo_list"], datos["velocidad_list"])
-    window.velrms.setData(datos["tiempo_list"], datos["v_rms_list"])
+    window.vrms.setData(datos["tiempo_list"], datos["vrms_list"])
 
     # Determinar estado de la máquina
     selected_machine = window.combobox_machine.currentText()    # Obtener el tipo de máquina seleccionado
-    estado = determinar_estado(selected_machine, datos["v_rms_list"][-1])
+    estado = determinar_estado(selected_machine, datos["vrms_list"][-1])
     window.update_led(estado)   # Actualizar estado de la máquina
 
     
