@@ -15,8 +15,10 @@ def actualizar_gui(datos):
     window.roll.setData(datos["tiempo_list"], datos["roll_list"])
 
     # Graficar PSD
-    t, psd = datos["psd"]
-    window.PSD.setData(t, psd)
+    tx, psdx, ty, psdy, tz, psdz = datos["psd"]
+    window.PSDx.setData(tx, psdx)
+    window.PSDy.setData(ty, psdy)
+    window.PSDz.setData(tz, psdz)
 
     # Graficar velocidad
     window.vel.setData(datos["tiempo_list"], datos["velocidad_list"])

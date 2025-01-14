@@ -117,10 +117,14 @@ class MainWindow(QMainWindow):
 
         self.combobox_machine = QComboBox()
         self.combobox_machine.addItems([
-            "Grupo I: Máquinas de 15-75 kW",
-            "Grupo II: Máquinas >75 kW",
-            "Grupo III: Máquinas acopladas",
-            "Grupo IV: Motores >300 kW"
+            "Grupo 1: Grandes máquinas >300 kW (base flexible)",
+            "Grupo 1: Grandes máquinas >300 kW (base rígida)",
+            "Grupo 2: Máquinas de 15-300 kW (base flexible)",
+            "Grupo 2: Máquinas de 15-300 kW (base rigida)",
+            "Grupo 3: Bombas <15 kW con motor separado (base flexible)",
+            "Grupo 3: Bombas <15 kW con motor separado (base rígida)",
+            "Grupo 4: Bombas <15 kW con motor integrado (base flexible)",
+            "Grupo 4: Bombas <15 kW con motor integrado(base rígida)"
         ])
         machine_layout.addWidget(self.combobox_machine)
 
@@ -129,7 +133,7 @@ class MainWindow(QMainWindow):
         # Sección: Cuadro de Estado
         self.state_frame = QFrame()
         self.state_frame.setFrameShape(QFrame.StyledPanel)
-        self.state_frame.setFixedSize(200, 200)
+        self.state_frame.setFixedSize(400, 200)
 
         state_layout = QVBoxLayout()
         self.state_label = QLabel("<h2>ESTADO</h2>")
@@ -138,7 +142,10 @@ class MainWindow(QMainWindow):
 
         self.led_layout = QGridLayout()
         self.leds = {}
-        states = ["OK", "Advertencia", "Alarma", "Error"]
+        states = ["Maquina nueva o reacondicionada", 
+                  "La maquina puede operar indefinidamente", 
+                  "La maquina no puede operar un tiempo prolongado", 
+                  "La vibracion esta provocando daños"]
         for i, state in enumerate(states):
             led_label = QLabel(state)
             led_label.setAlignment(Qt.AlignHCenter)
@@ -164,7 +171,7 @@ class MainWindow(QMainWindow):
         self.layout.addWidget(self.plot_widget, 3)
 
         # Gráfica de aceleración
-        self.accel_plot = self.plot_widget.addPlot(title="Aceleración (m/s²)")
+        self.accel_plot = self.plot_widget.addPlot(title="Aceleración")
         self.accel_plot.showGrid(x=True, y=True)
         self.accel_plot.addLegend()
         self.accel_plot.setLabel('bottom', 'Tiempo', units='s')
@@ -175,7 +182,7 @@ class MainWindow(QMainWindow):
 
         # Gráfica de pitch y roll
         self.plot_widget.nextRow()
-        self.pitch_roll_plot = self.plot_widget.addPlot(title="Pitch y Roll (grados)")
+        self.pitch_roll_plot = self.plot_widget.addPlot(title="Pitch y Roll")
         self.pitch_roll_plot.showGrid(x=True, y=True)
         self.pitch_roll_plot.addLegend()
         self.pitch_roll_plot.setLabel('bottom', 'Tiempo', units='s')
@@ -190,11 +197,13 @@ class MainWindow(QMainWindow):
         self.PSD.addLegend()
         self.PSD.setLabel('bottom', 'Frecuencia', units='Hz')
         self.PSD.setLabel('left', 'Modulo', units='')
-        self.PSD = self.PSD.plot()
+        self.PSDx = self.PSD.plot(pen='r', name='X')
+        self.PSDy = self.PSD.plot(pen='g', name='Y')
+        self.PSDz = self.PSD.plot(pen='b', name='Z')
 
         # Gráfica de velocidad
         self.plot_widget.nextRow()
-        self.vel_plot = self.plot_widget.addPlot(title="Velocidad (mm/s)")
+        self.vel_plot = self.plot_widget.addPlot(title="Velocidad")
         self.vel_plot.showGrid(x=True, y=True)
         self.vel_plot.addLegend()
         self.vel_plot.setLabel('bottom', 'Tiempo', units='s')

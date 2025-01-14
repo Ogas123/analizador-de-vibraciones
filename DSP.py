@@ -31,6 +31,25 @@ def calcular_pitch_roll(acelX, acelY, acelZ):
     roll = math.atan2(acelY, math.sqrt(acelX**2 + acelZ**2)) * 180 / math.pi
     return pitch, roll
 
+
+def promedio_movil(datos, n):
+    """
+    Calcula el promedio móvil de una lista de datos si la longitud es mayor que 'n'.
+
+    Parámetros:
+    - datos: Lista de números.
+    - n: Tamaño del intervalo para calcular el promedio móvil.
+
+    Retorna:
+    - Una lista con los valores del promedio móvil o la lista original si es menor o igual a 'n'.
+    """
+    if len(datos) <= n:
+        return datos  # Si la longitud es menor o igual a 'n', devolver la lista original.
+
+    promedios = [sum(datos[i:i + n]) / n for i in range(len(datos) - n + 1)]
+    return promedios
+
+
 def calcular_psd(Acc, f):
     """
     Calcula la autocorrelación de la señal y luego la Densidad Espectral de Potencia (PSD).
@@ -73,26 +92,29 @@ def determinar_estado(tipo_maquina, vrms):
     """
     # Límites de vibración según ISO 10816
     limites = {
-        "Grupo I: Máquinas de 15-75 kW": [0.71, 1.8, 4.5],  # [OK, Advertencia, Alarma]
-        "Grupo II: Máquinas >75 kW": [1.12, 2.8, 7.1],
-        "Grupo III: Máquinas acopladas": [1.8, 4.5, 11.2],
-        "Grupo IV: Motores >300 kW": [2.8, 7.1, 18]
-    }
+    "Grupo 1: Grandes máquinas >300 kW (base flexible)": [3.5, 7.1, 11],
+    "Grupo 1: Grandes máquinas >300 kW (base rígida)": [2.3, 4.5, 7.1],
+    "Grupo 2: Máquinas de 15-300 kW (base flexible)": [2.3, 4.5, 7.1],
+    "Grupo 2: Máquinas de 15-300 kW (base rigida)": [1.4, 2.8, 4.5],
+    "Grupo 3: Bombas <15 kW con motor separado (base flexible)": [3.5, 7.1, 11],
+    "Grupo 3: Bombas <15 kW con motor separado (base rígida)": [2.3, 4.5, 7.1],
+    "Grupo 4: Bombas <15 kW con motor integrado (base flexible)": [2.3, 4.5, 7.1],
+    "Grupo 4: Bombas <15 kW con motor integrado(base rígida)": [1.4, 2.8, 4.5]
+}
 
     # Verifica si el tipo de máquina tiene límites definidos
     if tipo_maquina not in limites:
         return "Error"  # Tipo de máquina desconocido
 
     # Obtiene los límites para el tipo de máquina
-    ok_limit, warning_limit, alarm_limit = limites[tipo_maquina]
+    A, B, C = limites[tipo_maquina]
 
     # Determina el estado según los límites
-    if vrms <= ok_limit:
-        return "OK"
-    elif vrms <= warning_limit:
-        return "Advertencia"
-    elif vrms <= alarm_limit:
-        return "Alarma"
+    if vrms <= A:
+        return "Maquina nueva o reacondicionada"
+    elif vrms <= B:
+        return "La maquina puede operar indefinidamente"
+    elif vrms <= C:
+        return "La maquina no puede operar un tiempo prolongado"
     else:
-        return "Error"
-
+        return "La vibracion esta provocando daños"
