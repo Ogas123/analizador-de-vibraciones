@@ -2,10 +2,11 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from collections import deque
 import numpy as np
 from COM import recibir, procesar_aceleracion, guardar_csv
-from DSP import calibrar_aceleracion, calcular_pitch_roll, calcular_psd
+from DSP import calibrar_aceleracion, calcular_pitch_roll, calcular_psd, promedio_movil
 # Buffers circulares 
 acelX_list, acelY_list, acelZ_list = deque(maxlen=100), deque(maxlen=100), deque(maxlen=100)
 acelX_centrada_list, acelY_centrada_list, acelZ_centrada_list = deque(maxlen=100), deque(maxlen=100), deque(maxlen=100)
+acelX_filtrada_list, acelY_filtrada_list, acelZ_filtrada_list = deque(maxlen=100), deque(maxlen=100), deque(maxlen=100)
 pitch_list, roll_list = deque(maxlen=100), deque(maxlen=100)
 vrms_list = deque(maxlen=100)
 
@@ -57,10 +58,15 @@ class WorkerThread(QThread):
                     pitch_list.append(pitch)
                     roll_list.append(roll)
 
+                    #filtro antes de integrar
+                    acelX_filtrada_list = promedio_movil(acelX_centrada_list, 100)
+                    acelY_filtrada_list = promedio_movil(acelY_centrada_list, 100)
+                    acelZ_filtrada_list = promedio_movil(acelZ_centrada_list, 100)
+
                     # Integración para obtener velocidad (m/s)
-                    velocidadX = np.cumsum(ts * np.array(acelX_centrada_list))
-                    velocidadY = np.cumsum(ts * np.array(acelY_centrada_list))
-                    velocidadZ = np.cumsum(ts * np.array(acelZ_centrada_list))
+                    velocidadX = np.cumsum(ts * np.array(acelX_filtrada_list))
+                    velocidadY = np.cumsum(ts * np.array(acelY_filtrada_list))
+                    velocidadZ = np.cumsum(ts * np.array(acelZ_filtrada_list))
 
                     # Calcular velocidad resultante
                     velocidad_resultante = np.sqrt(velocidadX**2 + velocidadY**2 + velocidadZ**2)

@@ -31,6 +31,12 @@ def calcular_pitch_roll(acelX, acelY, acelZ):
     roll = math.atan2(acelY, math.sqrt(acelX**2 + acelZ**2)) * 180 / math.pi
     return pitch, roll
 
+def promedio_movil(datos, ventana):
+    """Aplica un filtro de promedio móvil a una lista de datos."""
+    if len(datos) < ventana:
+        return datos  # Si no hay suficientes datos, no filtrar
+    return np.convolve(datos, np.ones(ventana) / ventana, mode='same')
+
 
 def calcular_psd(Acc, f):
     """
