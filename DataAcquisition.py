@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import QThread, Signal
 from collections import deque
 import numpy as np
 from COM import recibir, procesar_aceleracion, guardar_csv
@@ -17,7 +17,7 @@ fs = 100  # Frecuencia de muestreo (Hz)
 ts = 1 / fs
 
 class WorkerThread(QThread):
-    data = pyqtSignal(dict) # Señal para enviar los datos procesados
+    data = Signal(dict) # Señal para enviar los datos procesados
 
     def run(self):
         global tiempo

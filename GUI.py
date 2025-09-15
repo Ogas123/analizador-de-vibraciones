@@ -1,10 +1,10 @@
-from PyQt5.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QPushButton, QComboBox, QLineEdit, QFrame, QGridLayout, QFileDialog
 )
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QSize
-from PyQt5.QtCore import Qt
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import QSize
+from PySide6.QtCore import Qt
 import pyqtgraph as pg
 from COM import enviar, listar_puertos, conectar_puerto, desconectar_puerto, crear_csv, cerrar_csv
 

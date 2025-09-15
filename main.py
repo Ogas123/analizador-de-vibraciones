@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 from GUI import MainWindow
 from DataAcquisition import WorkerThread
 from DSP import determinar_estado
@@ -40,4 +40,4 @@ hilo_adquisicion.start()
 
 # Mostrar ventana principal
 window.show()
-app.exec_()
+app.exec()
