@@ -26,7 +26,7 @@ def procesar_aceleracion(high_byte, low_byte):          #Transforma los datos re
         valor = ((high_byte << 8) | low_byte) >> 2
         if valor & 0x2000:
             valor -= 0x4000
-        return (valor / 4096.0) * 9.81
+        return (valor / 4096.0) * 9.80665
 
 def listar_puertos():
     """Devuelve una lista de puertos COM disponibles."""

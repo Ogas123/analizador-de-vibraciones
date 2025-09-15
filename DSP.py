@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.signal import correlate
+from scipy.signal import welch
 import math
 
 def calibrar_aceleracion(ax, ay, az):
@@ -31,78 +31,60 @@ def calcular_pitch_roll(acelX, acelY, acelZ):
     roll = math.atan2(acelY, math.sqrt(acelX**2 + acelZ**2)) * 180 / math.pi
     return pitch, roll
 
-def promedio_movil(datos, ventana):
-    """Aplica un filtro de promedio móvil a una lista de datos."""
-    if len(datos) < ventana:
-        return datos  # Si no hay suficientes datos, no filtrar
-    return np.convolve(datos, np.ones(ventana) / ventana, mode='same')
 
-
-def calcular_psd(Acc, f):
+def calcular_psd(acel, fs, nperseg=None):
     """
-    Calcula la autocorrelación de la señal y luego la Densidad Espectral de Potencia (PSD).
+    Calcula la PSD de la señal de aceleración usando Welch.
 
-    Parámetros:
-    Acc : numpy array
-        Señal de entrada.
-    f : float
-        Frecuencia de muestreo de la señal.
-
-    Retorna:
-    t : numpy array
-        Rango de frecuencias centrado.
-    PSD : numpy array
-        Densidad espectral de potencia.
+    acel : array-like (list, deque, np.array) en m/s^2
+    fs   : frecuencia de muestreo [Hz]
+    nperseg : tamaño de segmento para Welch
     """
-    # Calcular la autocorrelación normalizada
-    Rx = correlate(Acc, Acc, mode='full')  # Autocorrelación
-    Rx = Rx / np.max(np.abs(Rx))           # Normalizar
-    N = len(Rx)                            # Número de puntos en la autocorrelación
+    # Convertir a numpy array por si recibo deque o lista
+    acel = np.asarray(acel, dtype=float)
+    
+    if acel.size == 0:
+        return np.array([]), np.array([])
 
-    # Transformada de Fourier para obtener la PSD
-    PSD = np.fft.fftshift(np.abs(np.fft.fft(Rx)) / N)  # FFT y normalización
-    t = np.linspace(-f / 2, f / 2, len(PSD))           # Rango de frecuencias centrado
-
-    return t, PSD
-
+    freqs, psd_a = welch(
+        acel,
+        fs=fs,
+        nperseg=min(nperseg or 256, len(acel)),  # nperseg <= tamaño de la señal
+        window='hann',
+        scaling='density'
+    )
+    return freqs, psd_a
 
 
 def determinar_estado(tipo_maquina, vrms):
     """
-    Determina el estado de la máquina según el tipo y el valor Vrms.
+    Determina el estado de un grupo electrógeno según ISO 8528-9:2017,
+    usando directamente el texto seleccionado en el combobox.
     
     Args:
-        tipo_maquina (str): Tipo de máquina (Grupo I, Grupo II, etc.).
-        vrms (float): Valor RMS de vibración.
-
+        tipo_maquina (str): Texto del combobox (ej: "≤ 40 kW").
+        vrms (float): Valor RMS de vibración (mm/s).
+    
     Returns:
-        str: Estado de la máquina ("OK", "Advertencia", "Alarma", "Error").
+        str: Estado de la máquina.
     """
-    # Límites de vibración según ISO 10816
+    # Diccionario con los límites Vrms (Generator, columna value 1 / value 2)
     limites = {
-    "Grupo 1: Grandes máquinas >300 kW (base flexible)": [3.5, 7.1, 11],
-    "Grupo 1: Grandes máquinas >300 kW (base rígida)": [2.3, 4.5, 7.1],
-    "Grupo 2: Máquinas de 15-300 kW (base flexible)": [2.3, 4.5, 7.1],
-    "Grupo 2: Máquinas de 15-300 kW (base rigida)": [1.4, 2.8, 4.5],
-    "Grupo 3: Bombas <15 kW con motor separado (base flexible)": [3.5, 7.1, 11],
-    "Grupo 3: Bombas <15 kW con motor separado (base rígida)": [2.3, 4.5, 7.1],
-    "Grupo 4: Bombas <15 kW con motor integrado (base flexible)": [2.3, 4.5, 7.1],
-    "Grupo 4: Bombas <15 kW con motor integrado(base rígida)": [1.4, 2.8, 4.5]
-}
-
-    # Verifica si el tipo de máquina tiene límites definidos
+        "≤ 40 kW": (50, 60),
+        "40 – 100 kW": (25, 30),
+        "100 – 200 kW": (25, 30),
+        "200 – 1000 kW": (20, 24),
+        "> 1000 kW": (15, 20),
+    }
+    
     if tipo_maquina not in limites:
-        return "Error"  # Tipo de máquina desconocido
-
-    # Obtiene los límites para el tipo de máquina
-    A, B, C = limites[tipo_maquina]
-
-    # Determina el estado según los límites
-    if vrms <= A:
-        return "Maquina nueva o reacondicionada"
-    elif vrms <= B:
-        return "La maquina puede operar indefinidamente"
-    elif vrms <= C:
-        return "La maquina no puede operar un tiempo prolongado"
+        return "Error: tipo no reconocido"
+    
+    lim1, lim2 = limites[tipo_maquina]
+    
+    if vrms <= lim1:
+        return f"Aceptable"
+    elif vrms <= lim2:
+        return f"Condicional"
     else:
-        return "La vibracion esta provocando daños"
+        return f"Inaceptable"

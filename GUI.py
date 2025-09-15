@@ -41,7 +41,7 @@ class MainWindow(QMainWindow):
         label4 = QLabel("Schwerdt Agustin")
         self.left_panel.addWidget(label4, alignment=Qt.AlignTop | Qt.AlignHCenter)
 
-        label5 = QLabel("Prueba de vibración acorde al estándar ISO 10816")
+        label5 = QLabel("Prueba de vibración acorde al estándar ISO 8528")
         self.left_panel.addWidget(label5, alignment=Qt.AlignTop | Qt.AlignHCenter)
 
         # Sección: Comunicación y medición
@@ -117,14 +117,11 @@ class MainWindow(QMainWindow):
 
         self.combobox_machine = QComboBox()
         self.combobox_machine.addItems([
-            "Grupo 1: Grandes máquinas >300 kW (base flexible)",
-            "Grupo 1: Grandes máquinas >300 kW (base rígida)",
-            "Grupo 2: Máquinas de 15-300 kW (base flexible)",
-            "Grupo 2: Máquinas de 15-300 kW (base rigida)",
-            "Grupo 3: Bombas <15 kW con motor separado (base flexible)",
-            "Grupo 3: Bombas <15 kW con motor separado (base rígida)",
-            "Grupo 4: Bombas <15 kW con motor integrado (base flexible)",
-            "Grupo 4: Bombas <15 kW con motor integrado(base rígida)"
+            "≤ 40 kW",
+            "40 - 100 kW",
+            "100 - 200 kW",
+            "200 - 1000 kW",
+            "> 1000 kW"
         ])
         machine_layout.addWidget(self.combobox_machine)
 
@@ -133,7 +130,7 @@ class MainWindow(QMainWindow):
         # Sección: Cuadro de Estado
         self.state_frame = QFrame()
         self.state_frame.setFrameShape(QFrame.StyledPanel)
-        self.state_frame.setFixedSize(400, 200)
+        self.state_frame.setFixedSize(200, 150)
 
         state_layout = QVBoxLayout()
         self.state_label = QLabel("<h2>ESTADO</h2>")
@@ -142,10 +139,12 @@ class MainWindow(QMainWindow):
 
         self.led_layout = QGridLayout()
         self.leds = {}
-        states = ["Maquina nueva o reacondicionada", 
-                  "La maquina puede operar indefinidamente", 
-                  "La maquina no puede operar un tiempo prolongado", 
-                  "La vibracion esta provocando daños"]
+        # Estados según ISO 8528-9
+        states = [
+            "Aceptable",
+            "Condicional",
+            "Inaceptable"
+        ]
         for i, state in enumerate(states):
             led_label = QLabel(state)
             led_label.setAlignment(Qt.AlignHCenter)

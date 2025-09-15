@@ -2,7 +2,7 @@ from PySide6.QtCore import QThread, Signal
 from collections import deque
 import numpy as np
 from COM import recibir, procesar_aceleracion, guardar_csv
-from DSP import calibrar_aceleracion, calcular_pitch_roll, calcular_psd, promedio_movil
+from DSP import calibrar_aceleracion, calcular_pitch_roll, calcular_psd
 # Buffers circulares 
 acelX_list, acelY_list, acelZ_list = deque(maxlen=100), deque(maxlen=100), deque(maxlen=100)
 acelX_centrada_list, acelY_centrada_list, acelZ_centrada_list = deque(maxlen=100), deque(maxlen=100), deque(maxlen=100)
@@ -39,16 +39,10 @@ class WorkerThread(QThread):
                     acelX_list.append(acelX_cal)
                     acelY_list.append(acelY_cal)
                     acelZ_list.append(acelZ_cal)
-
-                    offsetX = np.mean(acelX_list)  # Calcula la media de la lista acumulada
-                    offsetY = np.mean(acelY_list)
-                    offsetZ = np.mean(acelZ_list)
-
-                    # Restar el offset para centrar en 0
-                    acelX_centrada_list.append(acelX_cal - offsetX)
-                    acelY_centrada_list.append(acelY_cal - offsetY)
-                    acelZ_centrada_list.append(acelZ_cal - offsetZ)
-
+                    
+                    fmin = 2.0
+                    fmax = min(1000.0, fs/2.0)   # no pasar de Nyquist
+                    
                     # Actualizar tiempo
                     tiempo += ts
                     tiempo_list.append(tiempo)
@@ -58,37 +52,51 @@ class WorkerThread(QThread):
                     pitch_list.append(pitch)
                     roll_list.append(roll)
 
-                    #filtro antes de integrar
-                    acelX_filtrada_list = promedio_movil(acelX_centrada_list, 100)
-                    acelY_filtrada_list = promedio_movil(acelY_centrada_list, 100)
-                    acelZ_filtrada_list = promedio_movil(acelZ_centrada_list, 100)
-
-                    # Integración para obtener velocidad (m/s)
-                    velocidadX = np.cumsum(ts * np.array(acelX_filtrada_list))
-                    velocidadY = np.cumsum(ts * np.array(acelY_filtrada_list))
-                    velocidadZ = np.cumsum(ts * np.array(acelZ_filtrada_list))
-
-                    # Calcular velocidad resultante
-                    velocidad_resultante = np.sqrt(velocidadX**2 + velocidadY**2 + velocidadZ**2)
-                    velocidad_mm_s = velocidad_resultante * 1000   # Velocidad en mm/s
+                    # Obtener PSD de aceleraciones
+                    fx, psdx = calcular_psd(acelX_list, fs)
+                    fy, psdy = calcular_psd(acelY_list, fs)
+                    fz, psdz = calcular_psd(acelZ_list, fs)
                     
-                    # Calcular RMS de la velocidad
-                    vrms = np.sqrt(np.mean(velocidad_mm_s**2)) 
-                    vrms_list.append(vrms)
+                    # convertir PSD de aceleración -> PSD de velocidad
+                    # evitar división por cero en f=0
+                    psd_vx = np.zeros_like(psdx)
+                    psd_vy = np.zeros_like(psdy)
+                    psd_vz = np.zeros_like(psdz)
 
-                    # Calcular PSD
-                    tx, psdx = calcular_psd(acelX_centrada_list, fs)
-                    ty, psdy = calcular_psd(acelY_centrada_list, fs)
-                    tz, psdz = calcular_psd(acelZ_centrada_list, fs)
-                    
+                    nonzero = fx > 0
+                    psd_vx[nonzero] = psdx[nonzero] / (2.0 * np.pi * fx[nonzero])**2
+                    psd_vy[nonzero] = psdy[nonzero] / (2.0 * np.pi * fx[nonzero])**2
+                    psd_vz[nonzero] = psdz[nonzero] / (2.0 * np.pi * fx[nonzero])**2
+
+                    # seleccionar banda ISO
+                    mask = (fx >= fmin) & (fx <= fmax)
+                    if not np.any(mask):
+                        # protecciones en caso de ventanas cortas o fs bajo
+                        vrms_list.append(0.0)
+                    else:
+                        # integrar PSD (uso trapz para no depender de df uniforme)
+                        vrms_x = np.sqrt(np.trapz(psd_vx[mask], fx[mask]))   # VRMS en m/s
+                        vrms_y = np.sqrt(np.trapz(psd_vy[mask], fx[mask]))
+                        vrms_z = np.sqrt(np.trapz(psd_vz[mask], fx[mask]))
+
+                        # convertir a mm/s
+                        vrms_x_mm = vrms_x * 1000.0
+                        vrms_y_mm = vrms_y * 1000.0
+                        vrms_z_mm = vrms_z * 1000.0
+
+                        # Resultado combinado:
+                        vrms_resultante_mm = np.sqrt(vrms_x_mm**2 + vrms_y_mm**2 + vrms_z_mm**2)
+
+                        vrms_list.append(vrms_resultante_mm)
+            
                     # Emitir los datos procesados
                     self.data.emit({
-                        "acelX_list": acelX_centrada_list,
-                        "acelY_list": acelY_centrada_list,
-                        "acelZ_list": acelZ_centrada_list,
+                        "acelX_list": acelX_list,
+                        "acelY_list": acelY_list,
+                        "acelZ_list": acelZ_list,
                         "tiempo_list": tiempo_list,
                         "pitch_list": pitch_list,
                         "roll_list": roll_list,
-                        "psd": (tx, psdx, ty, psdy, tz, psdz),
+                        "psd": (fx, psdx, fy, psdy, fz, psdz),
                         "vrms_list": vrms_list,
                     })
