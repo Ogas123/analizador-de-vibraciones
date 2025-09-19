@@ -19,19 +19,6 @@ Esta aplicación fue desarrollada en el marco de la materia Diseño de Sistemas 
 - Exportación de datos crudos a archivo .csv
 - Análisis de condición de motor rotativo estático según norma ISO 8528
 
-
-## Instalación
-1. Clona este repositorio:
-    git clone https://github.com/Ogas123/analizador-de-vibraciones.git
-2. Navega al directorio del proyecto:
-    cd analizador-de-vibraciones
-3. Instala las dependencias:
-    pip install -r requirements.txt
-4. Ejecuta la aplicación:
-    python main.py
-5. Selecciona el puerto COM correspondiente y comienza la medición.
-
-
 ## Requisitos
 - Python 3.10 o superior
 - PySide6
