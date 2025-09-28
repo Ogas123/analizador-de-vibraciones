@@ -7,6 +7,9 @@ También permite analizar la condición de un motor rotativo estático, siguiend
 
 Esta aplicación fue desarrollada en el marco de la materia Diseño de Sistemas con Microcontroladores de la Facultad de Ingeniería de la Universidad Nacional del Comahue.
 
+- 📡 **Firmware de la IMU y microcontrolador** (dsPIC33):  
+  👉 [IMU](https://github.com/Ogas123/IMU)
+
 ![alt text](assets/screenshot.png)
 
 ## Características
@@ -52,4 +55,5 @@ Esta aplicación fue desarrollada en el marco de la materia Diseño de Sistemas 
 - Si se presentan errores al ejecutar la aplicación, revisá que las versiones de Python y las librerías sean compatibles.
 
 ## Contacto
+
 agustinschwerdt@gmail.com
